@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>贪吃蛇案例</title>
+	<style type="text/css">
+		#map{width:800px;height:600px;position: relative;display: block;background-color: #999;margin: auto}
+	</style>
+	<script type="text/javascript">
+	
+	window.onload=function(){
+		//  创建食物的自调用函数
+		(function(){
+		var elements=[];
+		var map = document.getElementById("map");
+			// 创建食物的构造函数
+		function Food(width,height,color,x,y){
+			
+			this.width=width || 20;
+			this.height=height || 20;
+		   this.color=color;
+			this.x=x;
+			this.y=y;
+			
+		}
+			
+			// 创建原型  是为了让小方块能在地图上显示，，所以此处需要传一个参数map
+		Food.prototype.init=function(map){ // 每次调用init方法时就会创建一个对象
+			//每次初始化时就删除一个
+			remove();
+			
+	   	// 创建食物对象
+			var div = document.createElement('div');
+			
+			//将小方块放在地图上
+		   map.appendChild(div);
+			
+		  div.style.width=this.width+'px';
+		  div.style.height=this.height+'px';
+		  div.style.backgroundColor=this.color;
+			
+		  //   x,y的坐标先停止,先处理div的文档流
+			div.style.position='absolute';
+			
+			//    它们是随机获取的
+			this.x=parseInt(Math.random()*(map.offsetWidth/this.width))*this.width;
+			this.y=parseInt(Math.random()*(map.offsetHeight/this.height))*this.height;
+			
+			div.style.left=this.x+'px';
+			div.style.top=this.y+'px';
+			
+				elements.push(div);
+		}
+		
+		// 删除食物的私有函数--外部不能使用的 	用来删除食物的
+		function remove(){
+			for(var i = 0; i < elements.length; i++){
+				var ele = elements[i];
+				
+				// 删除地图上的子元素
+				ele.parentNode.removeChild(ele);
+				
+				//  再将elements数组中的子元素也删除
+				elements.splice(i,1);
+			}
+			
+			
+		}
+			
+			window.Food=Food;
+			
+		}());
+		
+		
+		//   创建小蛇的自调用函数
+		(function(){
+			var elements = [];
+			function She(width,height,fang){
+				
+				this.width=width || 20;
+				this.height=height || 20;
+				this.body = [
+					{x:3,y:2,color:'red'},
+					{x:2,y:2,color:'blue'},
+					{x:1,y:2,color:'blue'},
+				];
+				this.fang=fang || 'right';
+				
+			};
+			
+			//  创建小蛇原型    小蛇身体的每一部分都是一个对象  将小蛇放在地图上
+			
+			 She.prototype.init=function(map){
+				
+				remove();
+					
+				// 遍历body数组元素
+				for(var i = 0; i < this.body.length; i++){
+					var obj = this.body[i];
+					
+					// 创建div
+					var div = document.createElement('div');
+					//  将div添加到地图上
+					map.appendChild(div);
+					//  设置div的样式
+					div.style.position='absolute';
+					div.style.width=this.width+'px';
+					div.style.height=this.height+'px';
+					div.style.backgroundColor=obj.color;	
+					
+					//  横纵坐标
+					div.style.left=obj.x*this.width+'px';
+					div.style.top=obj.y*this.height+'px';
+					
+					//  方向暂时不定
+					
+					//  将div放到elements中 ---目的是为了删除
+					elements.push(div);
+				}
+				
+			}
+		
+			 
+			//  创建小蛇原型   ----让小蛇动起来
+			She.prototype.move=function(food,map){
+				//  改变小蛇的身体的坐标位置
+				var i = this.body.length-1;
+				
+				for( ; i > 0 ; i--){
+					this.body[i].x=this.body[i-1].x;
+					this.body[i].y=this.body[i-1].y;
+				}
+				
+				//  小蛇的蛇头单独算
+				switch(this.fang){
+					case 'right': 
+						this.body[0].x +=1;
+						break;
+					case 'left':
+						this.body[0].x -=1;
+						break;
+					case 'top':
+						this.body[0].y -=1;
+						break;
+					case 'down':
+						this.body[0].y +=1;
+						break;
+							
+				}
+				
+			}
+		
+			  // 删除小蛇的私有函数
+			function remove(){
+				var i = elements.length - 1;
+				
+				for( ; i >= 0 ; i--){
+					var ele = elements[i];
+					//  这是删除地图上的div
+					 ele.parentNode.removeChild(ele);
+					//  再把数组中的div也删除
+					elements.splice(i,1);
+				}
+			}
+			
+			window.She=She;
+		}());
+		
+		
+		
+		//  创建 游戏的自定义函数
+		(function(){
+			
+		//  创建游戏的构造函数
+			function Game(map){
+				this.food=new Food(20,20,'blue');
+				this.she=new She();
+				this.map=map;
+			   that = this;
+				
+			}
+			
+			//  游戏的原型
+			Game.prototype.init=function(){
+				
+				this.food.init(this.map);	
+				this.she.init(this.map);
+				
+				//  调用runshe原型  
+				this.runshe(this.food,this.map);	
+			}
+			
+			
+		//  添加原型----让小蛇自己动起来
+			Game.prototype.runshe=function(food,map){
+				
+				this.food.init(this.map);
+				this.she.init(this.map);
+				timer = setInterval(function(){
+					
+					this.she.move(this.food,this.map);
+					this.she.init(this.map);
+					
+		 //  判断小蛇撞墙的边界
+		          //  小蛇的最大边界
+				var maxX=this.map.offsetWidth/this.she.width;
+				var maxY=this.map.offsetHeight/this.she.height;
+					//  小蛇的头的位置
+				var headx=this.she.body[0].x;
+				var heady=this.she.body[0].y;
+				console.log(maxX+"====="+headx);
+					if(headx<0 || headx >= maxX){
+						clearInterval(timer);
+						alert("结束");
+					}
+					if(heady < 0 || heady >= maxY){
+						clearInterval(timer);
+					}
+					
+					
+					
+				}.bind(that),500);
+				
+			}
+			
+			
+			
+			
+			window.Game=Game;
+		}());
+		
+		  var game= new Game(document.getElementById("map"));
+		  game.init();
+		
+		
+		
+		
+	}
+		
+		
+	
+	</script>
+
+</head>
+
+<body>
+	<div id="map"></div>
+</body>
+</html>
